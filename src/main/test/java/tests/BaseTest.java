@@ -1,11 +1,13 @@
 package tests;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
+import io.qameta.allure.junit4.DisplayName;
 import org.junit.After;
 import org.junit.Before;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+
 import java.time.Duration;
 
 public class BaseTest {
@@ -14,18 +16,10 @@ public class BaseTest {
 
     @Before
     public void setUp() {
-        String browser = System.getProperty("browser", "chrome");
-
-        if (browser.equals("yandex")) {
-            WebDriverManager.chromedriver().setup();
-            ChromeOptions options = new ChromeOptions();
-            options.setBinary("/Applications/Yandex.app/Contents/MacOS/Yandex"); // путь к браузеру
-            driver = new ChromeDriver(options);
-        } else {
-            WebDriverManager.chromedriver().setup();
-            driver = new ChromeDriver();
-        }
-
+        WebDriverManager.chromedriver().setup();
+        ChromeOptions options = new ChromeOptions();
+        options.addArguments("--remote-allow-origins=*");
+        driver = new ChromeDriver(options);
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
         driver.manage().window().maximize();
         driver.get(BASE_URL);
