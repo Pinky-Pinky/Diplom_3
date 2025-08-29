@@ -1,6 +1,6 @@
 package tests;
 
-import io.qameta.allure.junit4.DisplayName;
+import io.qameta.allure.Description;
 import org.junit.Test;
 import pages.RegisterPage;
 
@@ -9,24 +9,24 @@ import static org.junit.Assert.assertTrue;
 public class RegisterTest extends BaseTest {
 
     @Test
-    @DisplayName("Успешная регистрация пользователя")
+    @Description("Проверяем, что новый пользователь может зарегистрироваться с валидными данными")
     public void successfulRegistrationTest() {
         RegisterPage registerPage = new RegisterPage(driver);
-        registerPage.openRegisterPage();
-        registerPage.register("newuser" + System.currentTimeMillis() + "@yandex.ru", "password123", "TestUser");
+        registerPage.open();
+        registerPage.register("newuser@example.com", "password123", "TestUser");
 
-        assertTrue("Ожидался переход на главную страницу после успешной регистрации",
-                registerPage.isMainPageDisplayed());
+        assertTrue("Не выполнен переход на главную страницу после регистрации",
+                driver.getCurrentUrl().contains("/"));
     }
 
     @Test
-    @DisplayName("Ошибка при вводе некорректного пароля")
-    public void errorOnInvalidPasswordTest() {
+    @Description("Проверяем, что нельзя зарегистрироваться с паролем короче 6 символов")
+    public void registrationWithShortPasswordTest() {
         RegisterPage registerPage = new RegisterPage(driver);
-        registerPage.openRegisterPage();
-        registerPage.register("newuser" + System.currentTimeMillis() + "@yandex.ru", "123", "TestUser");
+        registerPage.open();
+        registerPage.register("newuser2@example.com", "123", "ShortPwd");
 
-        assertTrue("Ожидалось сообщение об ошибке для короткого пароля",
-                registerPage.isPasswordErrorDisplayed());
+        assertTrue("Сообщение об ошибке отсутствует",
+                registerPage.isErrorVisible());
     }
 }

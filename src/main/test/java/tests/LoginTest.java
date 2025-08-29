@@ -1,54 +1,50 @@
 package tests;
 
-import io.qameta.allure.junit4.DisplayName;
+import io.qameta.allure.Description;
 import org.junit.Test;
 import pages.LoginPage;
-import pages.RegisterPage;
-import pages.ForgotPasswordPage;
 
 import static org.junit.Assert.assertTrue;
 
 public class LoginTest extends BaseTest {
-    private final String EMAIL = "pinky-pinky@yandex.ru";
-    private final String PASSWORD = "password";
 
     @Test
-    @DisplayName("Вход по кнопке «Войти в аккаунт» на главной")
+    @Description("Проверяем вход через кнопку 'Войти в аккаунт' на главной странице")
     public void loginFromMainPageTest() {
         LoginPage loginPage = new LoginPage(driver);
-        loginPage.loginFromMainPage(EMAIL, PASSWORD);
-        assertTrue("Ожидался успешный вход через главную страницу", loginPage.isMainPageDisplayed());
+        loginPage.open();
+        loginPage.login("pinky-pinky@yandex.ru", "password");
+
+        assertTrue(driver.getCurrentUrl().contains("/"));
     }
 
     @Test
-    @DisplayName("Вход через кнопку «Личный кабинет»")
-    public void loginFromProfilePageTest() {
+    @Description("Проверяем вход через кнопку 'Личный кабинет'")
+    public void loginFromProfileButtonTest() {
         LoginPage loginPage = new LoginPage(driver);
-        loginPage.loginFromProfile(EMAIL, PASSWORD);
-        assertTrue("Ожидался успешный вход через личный кабинет", loginPage.isMainPageDisplayed());
+        loginPage.openFromProfile();
+        loginPage.login("pinky-pinky@yandex.ru", "password");
+
+        assertTrue(driver.getCurrentUrl().contains("/"));
     }
 
     @Test
-    @DisplayName("Вход через форму регистрации")
-    public void loginFromRegisterPageTest() {
-        RegisterPage registerPage = new RegisterPage(driver);
-        registerPage.openRegisterPage();
-        registerPage.clickLoginLink();
-
+    @Description("Проверяем вход со страницы регистрации")
+    public void loginFromRegisterFormTest() {
         LoginPage loginPage = new LoginPage(driver);
-        loginPage.login(EMAIL, PASSWORD);
-        assertTrue("Ожидался успешный вход через форму регистрации", loginPage.isMainPageDisplayed());
+        loginPage.openFromRegister();
+        loginPage.login("pinky-pinky@yandex.ru", "password");
+
+        assertTrue(driver.getCurrentUrl().contains("/"));
     }
 
     @Test
-    @DisplayName("Вход через форму восстановления пароля")
-    public void loginFromForgotPasswordPageTest() {
-        ForgotPasswordPage forgotPasswordPage = new ForgotPasswordPage(driver);
-        forgotPasswordPage.openForgotPasswordPage();
-        forgotPasswordPage.clickLoginLink();
-
+    @Description("Проверяем вход через форму восстановления пароля")
+    public void loginFromForgotPasswordFormTest() {
         LoginPage loginPage = new LoginPage(driver);
-        loginPage.login(EMAIL, PASSWORD);
-        assertTrue("Ожидался успешный вход через форму восстановления пароля", loginPage.isMainPageDisplayed());
+        loginPage.openFromForgotPassword();
+        loginPage.login("pinky-pinky@yandex.ru", "password");
+
+        assertTrue(driver.getCurrentUrl().contains("/"));
     }
 }

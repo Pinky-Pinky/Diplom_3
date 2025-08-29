@@ -1,6 +1,6 @@
 package tests;
 
-import io.qameta.allure.junit4.DisplayName;
+import io.qameta.allure.Description;
 import org.junit.Test;
 import pages.ConstructorPage;
 
@@ -9,29 +9,32 @@ import static org.junit.Assert.assertTrue;
 public class ConstructorTest extends BaseTest {
 
     @Test
-    @DisplayName("Переход в раздел «Булки»")
+    @Description("Проверяем переход к разделу 'Булки'")
     public void bunsSectionTest() {
         ConstructorPage constructorPage = new ConstructorPage(driver);
-        constructorPage.openConstructorPage();
-        constructorPage.clickBunsSection();
-        assertTrue("Ожидалось отображение раздела Булки", constructorPage.isBunsSectionActive());
+        constructorPage.open();
+        constructorPage.goToBuns();
+
+        assertTrue(constructorPage.isBunsVisible());
     }
 
     @Test
-    @DisplayName("Переход в раздел «Соусы»")
+    @Description("Проверяем переход к разделу 'Соусы'")
     public void saucesSectionTest() {
         ConstructorPage constructorPage = new ConstructorPage(driver);
-        constructorPage.openConstructorPage();
-        constructorPage.clickSaucesSection();
-        assertTrue("Ожидалось отображение раздела Соусы", constructorPage.isSaucesSectionActive());
+        constructorPage.open();
+        constructorPage.goToSauces();
+
+        assertTrue(constructorPage.isSaucesVisible());
     }
 
     @Test
-    @DisplayName("Переход в раздел «Начинки»")
+    @Description("Проверяем переход к разделу 'Начинки'")
     public void fillingsSectionTest() {
         ConstructorPage constructorPage = new ConstructorPage(driver);
-        constructorPage.openConstructorPage();
-        constructorPage.clickFillingsSection();
-        assertTrue("Ожидалось отображение раздела Начинки", constructorPage.isFillingsSectionActive());
+        constructorPage.open();
+        constructorPage.goToFillings();
+
+        assertTrue(constructorPage.isFillingsVisible());
     }
 }
