@@ -13,15 +13,31 @@ public class ConstructorPage extends BasePage {
         super(driver);
     }
 
-    public void clickBunsTab() {
+    public void open() {
+        driver.get("https://stellarburgers.nomoreparties.site/");
+    }
+
+    public void goToBuns() {
         driver.findElement(bunsTab).click();
     }
 
-    public void clickSaucesTab() {
+    public void goToSauces() {
         driver.findElement(saucesTab).click();
     }
 
-    public void clickFillingsTab() {
+    public void goToFillings() {
         driver.findElement(fillingsTab).click();
+    }
+
+    public boolean isBunsVisible() {
+        return driver.findElement(bunsTab).isDisplayed();
+    }
+
+    public boolean isSaucesVisible() {
+        return driver.findElement(saucesTab).isDisplayed();
+    }
+
+    public boolean isFillingsVisible() {
+        return driver.findElement(fillingsTab).isDisplayed();
     }
 }

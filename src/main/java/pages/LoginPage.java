@@ -13,15 +13,25 @@ public class LoginPage extends BasePage {
         super(driver);
     }
 
-    public void enterEmail(String email) {
+    public void openLoginPage() {
+        driver.get("https://stellarburgers.nomoreparties.site/login");
+    }
+
+    public void openLoginPageFromProfile() {
+        driver.get("https://stellarburgers.nomoreparties.site/account");
+    }
+
+    public void openLoginPageFromRegister() {
+        driver.get("https://stellarburgers.nomoreparties.site/register");
+    }
+
+    public void openLoginPageFromForgotPassword() {
+        driver.get("https://stellarburgers.nomoreparties.site/forgot-password");
+    }
+
+    public void login(String email, String password) {
         driver.findElement(emailField).sendKeys(email);
-    }
-
-    public void enterPassword(String password) {
         driver.findElement(passwordField).sendKeys(password);
-    }
-
-    public void clickLoginButton() {
         driver.findElement(loginButton).click();
     }
 }

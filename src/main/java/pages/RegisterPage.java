@@ -15,23 +15,18 @@ public class RegisterPage extends BasePage {
         super(driver);
     }
 
-    public void enterName(String name) {
+    public void open() {
+        driver.get("https://stellarburgers.nomoreparties.site/register");
+    }
+
+    public void register(String name, String email, String password) {
         driver.findElement(nameField).sendKeys(name);
-    }
-
-    public void enterEmail(String email) {
         driver.findElement(emailField).sendKeys(email);
-    }
-
-    public void enterPassword(String password) {
         driver.findElement(passwordField).sendKeys(password);
-    }
-
-    public void clickRegisterButton() {
         driver.findElement(registerButton).click();
     }
 
-    public String getErrorMessage() {
-        return driver.findElement(errorMessage).getText();
+    public boolean isErrorVisible() {
+        return driver.findElements(errorMessage).size() > 0;
     }
 }
