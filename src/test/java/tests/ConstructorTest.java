@@ -1,30 +1,48 @@
 package tests;
 
+import io.qameta.allure.Description;
 import org.junit.Test;
 import org.openqa.selenium.By;
+import pages.ConstructorPage;
+
+import static org.junit.Assert.assertTrue;
 
 public class ConstructorTest extends BaseTest {
 
-    private final String BASE_URL = "https://stellarburgers.nomoreparties.site/";
-
     @Test
-    public void bunsSectionTest() {
-        driver.get(BASE_URL);
+    @Description("Проверяем переход на вкладку 'Булки' и её активацию через className")
+    public void bunsSectionTest() throws InterruptedException {
+        ConstructorPage page = new ConstructorPage(driver);
+        page.open();
+
+        // Подождем чуть перед кликом, чтобы элементы точно прогрузились
+        Thread.sleep(500);
         clickWhenReady(By.xpath("//span[text()='Булки']"));
-        waitForVisible(By.xpath("//h2[text()='Булки']")); // проверка, что блок отобразился
+
+        assertTrue("Булки не активны", page.isBunsActive());
     }
 
     @Test
-    public void saucesSectionTest() {
-        driver.get(BASE_URL);
+    @Description("Проверяем переход на вкладку 'Соусы' и её активацию через className")
+    public void saucesSectionTest() throws InterruptedException {
+        ConstructorPage page = new ConstructorPage(driver);
+        page.open();
+
+        Thread.sleep(500);
         clickWhenReady(By.xpath("//span[text()='Соусы']"));
-        waitForVisible(By.xpath("//h2[text()='Соусы']"));
+
+        assertTrue("Соусы не активны", page.isSaucesActive());
     }
 
     @Test
-    public void fillingsSectionTest() {
-        driver.get(BASE_URL);
+    @Description("Проверяем переход на вкладку 'Начинки' и её активацию через className")
+    public void fillingsSectionTest() throws InterruptedException {
+        ConstructorPage page = new ConstructorPage(driver);
+        page.open();
+
+        Thread.sleep(500);
         clickWhenReady(By.xpath("//span[text()='Начинки']"));
-        waitForVisible(By.xpath("//h2[text()='Начинки']"));
+
+        assertTrue("Начинки не активны", page.isFillingsActive());
     }
 }
