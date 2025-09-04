@@ -10,9 +10,7 @@ public class ConstructorPage extends BasePage {
     private final By bunsTab = By.xpath("//span[text()='Булки']");
     private final By saucesTab = By.xpath("//span[text()='Соусы']");
     private final By fillingsTab = By.xpath("//span[text()='Начинки']");
-
-    // локатор для проверки активного состояния вкладки
-    private final By activeParent = By.xpath("./parent::div[contains(@class,'tab_tab_type_current')]");
+    private final By tabContainer = By.xpath("./ancestor::div[contains(@class,'tab_tab_type_current')]");
 
     public ConstructorPage(WebDriver driver) {
         super(driver);
@@ -25,22 +23,24 @@ public class ConstructorPage extends BasePage {
 
     @Step("Переходим на вкладку 'Булки'")
     public void goToBuns() {
-        driver.findElement(bunsTab).click();
+        clickWhenReady(bunsTab);
     }
 
     @Step("Переходим на вкладку 'Соусы'")
     public void goToSauces() {
-        driver.findElement(saucesTab).click();
+        clickWhenReady(saucesTab);
     }
 
     @Step("Переходим на вкладку 'Начинки'")
     public void goToFillings() {
-        driver.findElement(fillingsTab).click();
+        clickWhenReady(fillingsTab);
     }
 
     private boolean isTabActive(By tabLocator) {
-        WebElement tab = driver.findElement(tabLocator);
-        return !tab.findElements(activeParent).isEmpty();
+        WebElement el = driver.findElement(tabLocator);
+        WebElement parent = el.findElement(tabContainer);
+        String cls = parent.getAttribute("class");
+        return cls != null && cls.contains("tab_tab_type_current");
     }
 
     @Step("Проверяем, что вкладка 'Булки' активна")

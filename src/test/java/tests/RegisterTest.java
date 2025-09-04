@@ -1,6 +1,7 @@
 package tests;
 
 import io.qameta.allure.Description;
+import io.qameta.allure.Step;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,7 +37,7 @@ public class RegisterTest extends BaseTest {
         String name = "UiUser" + System.currentTimeMillis();
 
         registerPage.register(name, email, password);
-        assertTrue("Регистрация не прошла", driver.getPageSource().contains("Войти") || driver.getCurrentUrl().contains("/account"));
+        checkSuccessfulRegistration();
 
         String accessToken = apiClient.loginAndGetAccessToken(email, password);
         createdUser = new ApiClient.CreatedUser();
@@ -59,7 +60,22 @@ public class RegisterTest extends BaseTest {
         String shortPwd = "123";
 
         registerPage.register(name, email, shortPwd);
-        assertTrue("Ожидалось сообщение об ошибке для короткого пароля", registerPage.isErrorVisible());
+        checkErrorIsVisible(registerPage);
+    }
+
+    // ================= Helper Steps =================
+
+    @Step("Проверяем успешную регистрацию")
+    private void checkSuccessfulRegistration() {
+        boolean isRegistered = driver.getPageSource().contains("Войти") || driver.getCurrentUrl().contains("/account");
+        attachText("Статус регистрации", "Регистрация успешна: " + isRegistered);
+        assertTrue("Регистрация не прошла", isRegistered);
+    }
+
+    @Step("Проверяем, что сообщение об ошибке видно")
+    private void checkErrorIsVisible(RegisterPage registerPage) {
+        boolean visible = registerPage.isErrorVisible();
+        attachText("Статус ошибки регистрации", "Сообщение об ошибке отображается: " + visible);
+        assertTrue("Ожидалось сообщение об ошибке для короткого пароля", visible);
     }
 }
-

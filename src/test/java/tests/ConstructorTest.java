@@ -2,7 +2,6 @@ package tests;
 
 import io.qameta.allure.Description;
 import org.junit.Test;
-import org.openqa.selenium.By;
 import pages.ConstructorPage;
 
 import static org.junit.Assert.assertTrue;
@@ -10,39 +9,29 @@ import static org.junit.Assert.assertTrue;
 public class ConstructorTest extends BaseTest {
 
     @Test
-    @Description("Проверяем переход на вкладку 'Булки' и её активацию через className")
-    public void bunsSectionTest() throws InterruptedException {
+    @Description("Проверяем переход на вкладку 'Булки' и её активацию")
+    public void bunsSectionTest() {
         ConstructorPage page = new ConstructorPage(driver);
         page.open();
-
-        // Подождем чуть перед кликом, чтобы элементы точно прогрузились
-        Thread.sleep(500);
-        clickWhenReady(By.xpath("//span[text()='Булки']"));
-
+        page.goToBuns();
         assertTrue("Булки не активны", page.isBunsActive());
     }
 
     @Test
-    @Description("Проверяем переход на вкладку 'Соусы' и её активацию через className")
-    public void saucesSectionTest() throws InterruptedException {
+    @Description("Проверяем переход на вкладку 'Соусы' и её активацию")
+    public void saucesSectionTest() {
         ConstructorPage page = new ConstructorPage(driver);
         page.open();
-
-        Thread.sleep(500);
-        clickWhenReady(By.xpath("//span[text()='Соусы']"));
-
+        page.goToSauces();
         assertTrue("Соусы не активны", page.isSaucesActive());
     }
 
     @Test
-    @Description("Проверяем переход на вкладку 'Начинки' и её активацию через className")
-    public void fillingsSectionTest() throws InterruptedException {
+    @Description("Проверяем переход на вкладку 'Начинки' и её активацию")
+    public void fillingsSectionTest() {
         ConstructorPage page = new ConstructorPage(driver);
         page.open();
-
-        Thread.sleep(500);
-        clickWhenReady(By.xpath("//span[text()='Начинки']"));
-
+        page.goToFillings();
         assertTrue("Начинки не активны", page.isFillingsActive());
     }
 }
