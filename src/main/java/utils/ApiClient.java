@@ -22,11 +22,36 @@ public class ApiClient {
         gson = new Gson();
     }
 
+    // DTO для создания пользователя
+    public static class UserRequest {
+        String email;
+        String password;
+        String name;
+
+        public UserRequest(String email, String password, String name) {
+            this.email = email;
+            this.password = password;
+            this.name = name;
+        }
+    }
+
+    // DTO для логина
+    public static class LoginRequest {
+        String email;
+        String password;
+
+        public LoginRequest(String email, String password) {
+            this.email = email;
+            this.password = password;
+        }
+    }
+
+    // DTO для ответа
     public static class CreatedUser {
         public String email;
         public String password;
         public String name;
-        public String accessToken;   // может содержать префикс "Bearer "
+        public String accessToken;
         public String refreshToken;
     }
 
@@ -45,41 +70,33 @@ public class ApiClient {
      * Создаёт пользователя через API и возвращает CreatedUser с токенами (если они есть в ответе)
      */
     public CreatedUser createUser(String email, String password, String name) throws IOException, InterruptedException {
-        JsonObject payload = new JsonObject();
-        payload.addProperty("email", email);
-        payload.addProperty("password", password);
-        payload.addProperty("name", name);
+        UserRequest user = new UserRequest(email, password, name);
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + "/auth/register"))
                 .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(payload)))
+                .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(user)))
                 .build();
 
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-        // Нормальные коды: 200 или 202 (в зависимости от API)
         if (response.statusCode() != 200 && response.statusCode() != 202) {
             throw new RuntimeException("Create user failed: " + response.statusCode() + " body: " + response.body());
         }
 
         JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
 
-        String accessToken = json.has("accessToken") ? json.get("accessToken").getAsString() : null;
-        String refreshToken = json.has("refreshToken") ? json.get("refreshToken").getAsString() : null;
-
         CreatedUser cu = new CreatedUser();
         cu.email = email;
         cu.password = password;
         cu.name = name;
-        cu.accessToken = accessToken;
-        cu.refreshToken = refreshToken;
+        cu.accessToken = json.has("accessToken") ? json.get("accessToken").getAsString() : null;
+        cu.refreshToken = json.has("refreshToken") ? json.get("refreshToken").getAsString() : null;
         return cu;
     }
 
     /**
      * Удаляет пользователя по accessToken.
-     * accessToken должен содержать префикс "Bearer " если API требует этого.
      */
     public void deleteUser(String accessToken) throws IOException, InterruptedException {
         if (accessToken == null || accessToken.isEmpty()) return;
@@ -101,14 +118,12 @@ public class ApiClient {
      * Логинит пользователя и возвращает accessToken (строку как в ответе, возможно с "Bearer ").
      */
     public String loginAndGetAccessToken(String email, String password) throws IOException, InterruptedException {
-        JsonObject payload = new JsonObject();
-        payload.addProperty("email", email);
-        payload.addProperty("password", password);
+        LoginRequest login = new LoginRequest(email, password);
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + "/auth/login"))
                 .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(payload)))
+                .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(login)))
                 .build();
 
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -117,10 +132,6 @@ public class ApiClient {
         }
 
         JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
-        if (json.has("accessToken")) {
-            return json.get("accessToken").getAsString();
-        } else {
-            return null;
-        }
+        return json.has("accessToken") ? json.get("accessToken").getAsString() : null;
     }
 }
