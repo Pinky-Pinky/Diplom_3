@@ -1,137 +1,102 @@
 package utils;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import io.restassured.RestAssured;
+import io.restassured.response.Response;
+import model.CreatedUser;
+import model.UserRequest;
+import model.LoginRequest;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.util.UUID;
+import java.time.Instant;
 
 public class ApiClient {
 
-    private final HttpClient httpClient;
-    private final Gson gson;
-    private final String baseUrl = "https://stellarburgers.nomoreparties.site/api";
+    private final String BASE_URL = "https://stellarburgers.nomoreparties.site/api";
 
-    public ApiClient() {
-        httpClient = HttpClient.newHttpClient();
-        gson = new Gson();
-    }
+    public CreatedUser createRandomUser() {
+        // Генерируем уникальный email с временной меткой
+        String timestamp = String.valueOf(Instant.now().toEpochMilli());
+        String email = "pinky-" + timestamp + "@yandex.ru";
+        String password = "Password123!"; // Более надёжный пароль
+        String name = "Pinky";
 
-    // DTO для создания пользователя
-    public static class UserRequest {
-        String email;
-        String password;
-        String name;
+        UserRequest userRequest = new UserRequest(email, password, name);
 
-        public UserRequest(String email, String password, String name) {
-            this.email = email;
-            this.password = password;
-            this.name = name;
-        }
-    }
-
-    // DTO для логина
-    public static class LoginRequest {
-        String email;
-        String password;
-
-        public LoginRequest(String email, String password) {
-            this.email = email;
-            this.password = password;
-        }
-    }
-
-    // DTO для ответа
-    public static class CreatedUser {
-        public String email;
-        public String password;
-        public String name;
-        public String accessToken;
-        public String refreshToken;
-    }
-
-    /**
-     * Создаёт уникального пользователя (email уникален) и возвращает объект CreatedUser
-     */
-    public CreatedUser createUserRandom() throws IOException, InterruptedException {
-        String random = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
-        String email = "ui_" + random + "@mail.test";
-        String password = "Passw0rd!" + random;
-        String name = "UiUser" + random;
-        return createUser(email, password, name);
-    }
-
-    /**
-     * Создаёт пользователя через API и возвращает CreatedUser с токенами (если они есть в ответе)
-     */
-    public CreatedUser createUser(String email, String password, String name) throws IOException, InterruptedException {
-        UserRequest user = new UserRequest(email, password, name);
-
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + "/auth/register"))
+        Response response = RestAssured.given()
                 .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(user)))
-                .build();
+                .body(userRequest)
+                .post(BASE_URL + "/auth/register");
 
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        // Логируем ответ API
+        System.out.println("API Response (create user): " + response.statusCode() + " - " + response.body().asString());
 
-        if (response.statusCode() != 200 && response.statusCode() != 202) {
-            throw new RuntimeException("Create user failed: " + response.statusCode() + " body: " + response.body());
+        if (response.statusCode() == 403 && response.body().asString().contains("User already exists")) {
+            // Если пользователь уже существует, пытаемся войти
+            return loginUser(email, password);
+        } else if (response.statusCode() != 200) {
+            throw new RuntimeException("Ошибка при создании пользователя: " + response.statusCode() + " - " + response.body().asString());
         }
 
-        JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
+        CreatedUser createdUser = new CreatedUser();
+        createdUser.setEmail(response.jsonPath().getString("user.email"));
+        createdUser.setName(response.jsonPath().getString("user.name"));
+        createdUser.setPassword(password); // Пароль не возвращается API, используем исходный
+        String accessToken = response.jsonPath().getString("accessToken");
+        String refreshToken = response.jsonPath().getString("refreshToken");
+        createdUser.setAccessToken(accessToken != null ? accessToken.replace("Bearer ", "") : null);
+        createdUser.setRefreshToken(refreshToken);
 
-        CreatedUser cu = new CreatedUser();
-        cu.email = email;
-        cu.password = password;
-        cu.name = name;
-        cu.accessToken = json.has("accessToken") ? json.get("accessToken").getAsString() : null;
-        cu.refreshToken = json.has("refreshToken") ? json.get("refreshToken").getAsString() : null;
-        return cu;
-    }
-
-    /**
-     * Удаляет пользователя по accessToken.
-     */
-    public void deleteUser(String accessToken) throws IOException, InterruptedException {
-        if (accessToken == null || accessToken.isEmpty()) return;
-
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + "/auth/user"))
-                .header("Content-Type", "application/json")
-                .header("Authorization", accessToken)
-                .DELETE()
-                .build();
-
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        if (response.statusCode() != 200 && response.statusCode() != 202) {
-            System.err.println("Warning: delete user returned " + response.statusCode() + " body: " + response.body());
+        if (createdUser.getEmail() == null || createdUser.getName() == null) {
+            throw new RuntimeException("API не вернул email или name: " + response.body().asString());
         }
+
+        return createdUser;
     }
 
-    /**
-     * Логинит пользователя и возвращает accessToken (строку как в ответе, возможно с "Bearer ").
-     */
-    public String loginAndGetAccessToken(String email, String password) throws IOException, InterruptedException {
-        LoginRequest login = new LoginRequest(email, password);
+    private CreatedUser loginUser(String email, String password) {
+        LoginRequest loginRequest = new LoginRequest(email, password);
 
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + "/auth/login"))
+        Response response = RestAssured.given()
                 .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(login)))
-                .build();
+                .body(loginRequest)
+                .post(BASE_URL + "/auth/login");
 
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        // Логируем ответ API
+        System.out.println("API Response (login user): " + response.statusCode() + " - " + response.body().asString());
+
         if (response.statusCode() != 200) {
-            throw new RuntimeException("Login failed: " + response.statusCode() + " body: " + response.body());
+            throw new RuntimeException("Ошибка при входе пользователя: " + response.statusCode() + " - " + response.body().asString());
         }
 
-        JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
-        return json.has("accessToken") ? json.get("accessToken").getAsString() : null;
+        CreatedUser createdUser = new CreatedUser();
+        createdUser.setEmail(response.jsonPath().getString("user.email"));
+        createdUser.setName(response.jsonPath().getString("user.name"));
+        createdUser.setPassword(password); // Пароль не возвращается API, используем исходный
+        String accessToken = response.jsonPath().getString("accessToken");
+        String refreshToken = response.jsonPath().getString("refreshToken");
+        createdUser.setAccessToken(accessToken != null ? accessToken.replace("Bearer ", "") : null);
+        createdUser.setRefreshToken(refreshToken);
+
+        if (createdUser.getEmail() == null || createdUser.getName() == null) {
+            throw new RuntimeException("API не вернул email или name при входе: " + response.body().asString());
+        }
+
+        return createdUser;
+    }
+
+    public void deleteUser(String accessToken) {
+        if (accessToken == null) {
+            return;
+        }
+
+        Response response = RestAssured.given()
+                .header("Authorization", "Bearer " + accessToken)
+                .delete(BASE_URL + "/auth/user");
+
+        // Логируем ответ API
+        System.out.println("API Response (delete user): " + response.statusCode() + " - " + response.body().asString());
+
+        if (response.statusCode() != 202 && response.statusCode() != 200) {
+            throw new RuntimeException("Ошибка при удалении пользователя: " + response.statusCode() + " - " + response.body().asString());
+        }
     }
 }

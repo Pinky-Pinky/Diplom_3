@@ -14,7 +14,7 @@ public class ConstructorTest extends BaseTest {
         ConstructorPage page = new ConstructorPage(driver);
         page.open();
         page.goToBuns();
-        assertTrue("Булки не активны", page.isBunsActive());
+        assertTrue("Вкладка 'Булки' не активна", page.isBunsActive());
     }
 
     @Test
@@ -23,7 +23,7 @@ public class ConstructorTest extends BaseTest {
         ConstructorPage page = new ConstructorPage(driver);
         page.open();
         page.goToSauces();
-        assertTrue("Соусы не активны", page.isSaucesActive());
+        assertTrue("Вкладка 'Соусы' не активна", page.isSaucesActive());
     }
 
     @Test
@@ -32,6 +32,6 @@ public class ConstructorTest extends BaseTest {
         ConstructorPage page = new ConstructorPage(driver);
         page.open();
         page.goToFillings();
-        assertTrue("Начинки не активны", page.isFillingsActive());
+        assertTrue("Вкладка 'Начинки' не активна", page.isFillingsActive());
     }
 }

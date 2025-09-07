@@ -1,45 +1,37 @@
 package pages;
 
-import org.openqa.selenium.*;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.time.Duration;
 
-public abstract class BasePage {
+public class BasePage {
 
     protected WebDriver driver;
-    protected WebDriverWait wait;
+    private final int TIMEOUT = 10;
 
     public BasePage(WebDriver driver) {
         this.driver = driver;
-        this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-    }
-
-    // ===== Helpers for interactions =====
-
-    protected WebElement waitForVisible(By locator) {
-        return wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
-    }
-
-    protected WebElement waitForClickable(By locator) {
-        return wait.until(ExpectedConditions.elementToBeClickable(locator));
     }
 
     protected void clickWhenReady(By locator) {
-        try {
-            WebElement el = waitForClickable(locator);
-            el.click();
-        } catch (ElementClickInterceptedException e) {
-            WebElement el = driver.findElement(locator);
-            ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", el);
-            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", el);
-        }
+        new WebDriverWait(driver, Duration.ofSeconds(TIMEOUT))
+                .until(ExpectedConditions.elementToBeClickable(locator))
+                .click();
     }
 
     protected void typeWhenVisible(By locator, String text) {
-        WebElement el = waitForVisible(locator);
+        WebElement el = new WebDriverWait(driver, Duration.ofSeconds(TIMEOUT))
+                .until(ExpectedConditions.visibilityOfElementLocated(locator));
         el.clear();
         el.sendKeys(text);
+    }
+
+    protected void waitForVisible(By locator) {
+        new WebDriverWait(driver, Duration.ofSeconds(TIMEOUT))
+                .until(ExpectedConditions.visibilityOfElementLocated(locator));
     }
 }

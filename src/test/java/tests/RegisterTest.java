@@ -1,7 +1,9 @@
 package tests;
 
+import io.qameta.allure.Attachment;
 import io.qameta.allure.Description;
 import io.qameta.allure.Step;
+import model.CreatedUser;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -12,70 +14,69 @@ import static org.junit.Assert.assertTrue;
 
 public class RegisterTest extends BaseTest {
 
-    private ApiClient.CreatedUser createdUser;
+    private ApiClient apiClient;
+    private CreatedUser testUser;
 
     @Before
-    public void beforeEach() {
-        // Не создаём пользователя через API, регистрируем через UI
+    public void setUp() {
+        super.setUp();
+        apiClient = new ApiClient();
+        try {
+            testUser = apiClient.createRandomUser();
+            attachText("Созданный тестовый пользователь",
+                    "Email: " + testUser.getEmail() +
+                            "\nName: " + testUser.getName() +
+                            "\nPassword: " + testUser.getPassword());
+        } catch (Exception e) {
+            throw new RuntimeException("Не удалось создать тестового пользователя: " + e.getMessage(), e);
+        }
     }
 
     @After
-    public void afterEach() throws Exception {
-        if (createdUser != null && createdUser.accessToken != null) {
-            apiClient.deleteUser(createdUser.accessToken);
+    public void tearDown() {
+        try {
+            if (testUser != null && testUser.getAccessToken() != null) {
+                apiClient.deleteUser(testUser.getAccessToken());
+                attachText("Удаление пользователя", "Пользователь с email " + testUser.getEmail() + " удалён");
+            }
+        } catch (Exception e) {
+            attachText("Ошибка при удалении пользователя", "Ошибка: " + e.getMessage());
+            System.err.println("Ошибка при удалении пользователя: " + e.getMessage());
+        } finally {
+            super.tearDown();
         }
     }
 
     @Test
-    @Description("Успешная регистрация нового пользователя")
-    public void successfulRegistrationTest() throws Exception {
+    @Description("Регистрация с валидными данными")
+    public void registrationWithValidDataTest() {
         RegisterPage registerPage = new RegisterPage(driver);
         registerPage.open();
+        registerPage.register(testUser.getName(), testUser.getEmail(), testUser.getPassword());
 
-        String email = "ui_" + System.currentTimeMillis() + "@mail.test";
-        String password = "Password1!" + System.currentTimeMillis();
-        String name = "UiUser" + System.currentTimeMillis();
-
-        registerPage.register(name, email, password);
-        checkSuccessfulRegistration();
-
-        String accessToken = apiClient.loginAndGetAccessToken(email, password);
-        createdUser = new ApiClient.CreatedUser();
-        createdUser.email = email;
-        createdUser.password = password;
-        createdUser.name = name;
-        createdUser.accessToken = accessToken;
-
-        attachText("Новый пользователь", "Email: " + email + ", Name: " + name);
+        // Проверяем, что отображается ошибка, так как пользователь уже создан через API
+        boolean errorVisible = registerPage.isUserExistsErrorVisible();
+        attachText("Статус проверки ошибки 'пользователь уже существует'",
+                "Ошибка отображается: " + errorVisible);
+        assertTrue("Ошибка 'Такой пользователь уже существует' не отображается", errorVisible);
     }
 
     @Test
-    @Description("Регистрация с коротким паролем (ожидается ошибка)")
+    @Description("Регистрация с коротким паролем (невалидный сценарий)")
     public void registrationWithShortPasswordTest() {
         RegisterPage registerPage = new RegisterPage(driver);
         registerPage.open();
+        String shortPassword = "123";
+        registerPage.register(testUser.getName(), testUser.getEmail(), shortPassword);
 
-        String email = "ui_bad_" + System.currentTimeMillis() + "@mail.test";
-        String name = "BadUser" + System.currentTimeMillis();
-        String shortPwd = "123";
-
-        registerPage.register(name, email, shortPwd);
-        checkErrorIsVisible(registerPage);
+        boolean passwordErrorVisible = registerPage.isErrorVisible("Некорректный пароль");
+        attachText("Статус проверки ошибки короткого пароля",
+                "Ошибка 'Некорректный пароль' отображается: " + passwordErrorVisible);
+        assertTrue("Ошибка 'Некорректный пароль' не отображается", passwordErrorVisible);
     }
 
-    // ================= Helper Steps =================
-
-    @Step("Проверяем успешную регистрацию")
-    private void checkSuccessfulRegistration() {
-        boolean isRegistered = driver.getPageSource().contains("Войти") || driver.getCurrentUrl().contains("/account");
-        attachText("Статус регистрации", "Регистрация успешна: " + isRegistered);
-        assertTrue("Регистрация не прошла", isRegistered);
-    }
-
-    @Step("Проверяем, что сообщение об ошибке видно")
-    private void checkErrorIsVisible(RegisterPage registerPage) {
-        boolean visible = registerPage.isErrorVisible();
-        attachText("Статус ошибки регистрации", "Сообщение об ошибке отображается: " + visible);
-        assertTrue("Ожидалось сообщение об ошибке для короткого пароля", visible);
+    @Attachment(value = "Текстовый аттачмент", type = "text/plain")
+    public static String attachText(String title, String content) {
+        return content;
     }
 }

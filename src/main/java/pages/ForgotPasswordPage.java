@@ -6,20 +6,27 @@ import org.openqa.selenium.WebDriver;
 
 public class ForgotPasswordPage extends BasePage {
 
-    private final By emailField = By.xpath("//label[text()='Email']/following-sibling::input");
-    private final By restoreButton = By.xpath("//button[text()='Восстановить']");
+    private final By emailInput = By.name("email");
+    private final By resetButton = By.xpath("//button[text()='Восстановить']");
+    private final By loginLink = By.xpath("//a[text()='Войти']");
 
     public ForgotPasswordPage(WebDriver driver) {
         super(driver);
     }
 
-    @Step("Вводим email для восстановления: {email}")
-    public void enterEmail(String email) {
-        driver.findElement(emailField).sendKeys(email);
+    @Step("Открываем страницу восстановления пароля")
+    public void open() {
+        driver.get("https://stellarburgers.nomoreparties.site/forgot-password");
     }
 
-    @Step("Нажимаем 'Восстановить'")
-    public void clickRestoreButton() {
-        driver.findElement(restoreButton).click();
+    @Step("Вводим email и отправляем форму восстановления")
+    public void resetPassword(String email) {
+        typeWhenVisible(emailInput, email);
+        clickWhenReady(resetButton);
+    }
+
+    @Step("Переходим на страницу логина")
+    public void goToLogin() {
+        clickWhenReady(loginLink);
     }
 }
